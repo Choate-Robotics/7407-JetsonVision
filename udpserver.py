@@ -1,41 +1,66 @@
 # echo_server.py
 
 import socketserver
-import camera
+from camera import CameraModule
+import socket
+from _thread import *
+import threading
+import cv2
+import time
+import pickle
 
-client_address = " "
+print_lock = threading.Lock()
 
-class MyUDPHandler(socketserver.BaseRequestHandler):
-    """
-    This class works similar to the TCP handler class, except that
-    self.request consists of a pair of data and client socket, and since
-    there is no connection the client address must be given explicitly
-    when sending data back via sendto().
-    """
+cam = CameraModule(1)
+def threaded():
+    time.sleep(1)
 
-    def setup(self):
-        print("Socket Opened")
+    while True:
+        # data received from client
+        #data = c.recv(1024)
+        # if not data:
+        #     print('Socket Closed')
+        #
+        #     # lock released on exit
+        #     print_lock.release()
+        #     break
+        #print(cam.frame)
+        #c.send(pickle.dumps(cam.frame))
+        print(pickle.dumps(cam.frame))
 
-    def handle(self):
-        #data = self.request[0].strip()
-        socket = self.request[1]
-        #print("{} wrote:".format(self.client_address[0]))
-        #print(data)
-        while True:
-            socket.sendto(b'hello', self.client_address)
-            print(self.request)
-            #data = self.request[0].strip()
-            #print(data)
 
-    def finish(self):
-        print("Socket Closed")
+
+
+
+        # connection closed
+    #c.close()
 
 if __name__ == "__main__":
 
     HOST, PORT = "0.0.0.0", 5801
+    # reverse a port on your computer
+    # in our case it is 12345 but it
+    # can be anything
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST, PORT))
+    print("socket binded to port", PORT)
 
-    # instantiate the server, and bind to localhost on port 9999
-    server = socketserver.UDPServer((HOST, PORT), MyUDPHandler)
-    # activate the server
-    # this will keep running until Ctrl-C
-    server.serve_forever()
+    # put the socket into listening mode
+    s.listen(5)
+    print("socket is listening")
+
+    # c, addr = s.accept()
+    # print('Connected to :', addr[0], ':', addr[1])
+
+    print_lock.acquire()
+    start_new_thread(threaded, ())
+    cam.start_capture()
+
+    # lock acquired by client
+
+
+
+    # Start a new thread and return its identifier
+    #start_new_thread(threaded, (c,))
+
+    s.close()

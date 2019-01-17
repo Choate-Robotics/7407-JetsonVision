@@ -11,8 +11,11 @@ class Frame:
         self.frame = cv.resize(self.frame, (width,int(width*9/16)))
         return self
 
-    def stitch_images(self, smallCam1, smallCam2):
-        concat = np.concatenate((smallCam1.frame, smallCam2.frame), axis=1)
+    def stitch_images(self, cam_list):
+        if len(cam_list) == 0:
+            return self
+
+        concat = np.concatenate(cam_list, axis=1)
         self.frame = np.concatenate((self.frame, concat), axis=0)
         return self
 

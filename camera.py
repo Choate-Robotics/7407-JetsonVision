@@ -3,43 +3,51 @@ import cv2
 import time
 from processors import Frame
 
-cap1 = cv2.VideoCapture(0)
-cap2 = cv2.VideoCapture(1)
-cap3 = cv2.VideoCapture(2)
-large_cam = 0
-cam_num = 3
-large_screen = 240
-small_screen = large_screen//(cam_num-1)
+class CameraModule:
+    def __init__(self, cam_num):
+        self.caps = []
+        for i in range(cam_num):
+            self.caps.append(cv2.VideoCapture(i))
+        self.large_cam = 0
+        self.cam_num = cam_num
+        self.large_screen = 240
+        self.small_screen = 0 if cam_num <= 1 else self.large_screen//(cam_num-1)
+        self.frame = []
 
 
-while(True):
-    # Capture frame-by-frame
-    ret, frame1 = cap1.read()
-    ret, frame2 = cap2.read()
-    ret, frame3 = cap3.read()
-    #ret, frame = cap2.read()
-    #ret,
 
-    if large_cam == 0:
-        fr1 = Frame(frame1)
-        fr2 = Frame(frame2)
-        fr3 = Frame(frame3)
-    if large_cam == 1:
-        fr1 = Frame(frame2)
-        fr2 = Frame(frame1)
-        fr3 = Frame(frame3)
-    if large_cam == 2:
-        fr1 = Frame(frame3)
-        fr2 = Frame(frame1)
-        fr3 = Frame(frame3)
+    def set_large_cam(self, large_cam_num):
+        self.large_cam = large_cam_num
+
+    def start_capture(self):
+        while (True):
+            #start = time.time()
+            # Capture frame-by-frame
+            self.sf = []
+            self.frames = []
+
+            for i in range(self.cam_num):
+                self.frames.append(self.caps[i].read()[1])
+
+            for i in range(self.cam_num):
+                self.sf.append(Frame(self.frames[i]))
+                if i == self.large_cam:
+                    self.sf[i].resize(self.large_screen)
+                else:
+                    self.sf[i].resize(self.small_screen)
+
+            self.frame = self.sf[self.large_cam].stitch_images([s.frame for s in (self.sf[:self.large_cam] + self.sf[self.large_cam+1:])])
+            self.frame = self.frame.frame
+            #print(time.time()-start)
 
 
-    #start=time.time()
+    def __del__(self):
+        for cap in self.caps:
+            cap.release()
 
-    fr1.resize(large_screen)
-    fr2.resize(small_screen)
-    fr3.resize(small_screen)
-    frame = fr1.stitch_images(fr2, fr3)
+
+
+
 
 
     # Our operations on the frame come here
@@ -51,8 +59,5 @@ while(True):
     #print(time.time()-start)
 
 # When everything done, release the capture
-cap1.release()
-cap2.release()
-cap3.release()
 
-cv2.destroyAllWindows()
+
