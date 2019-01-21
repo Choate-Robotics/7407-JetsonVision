@@ -1,66 +1,119 @@
 # echo_server.py
-
-import socketserver
-from camera import CameraModule
+import json
 import socket
-from _thread import *
+import struct
 import threading
-import cv2
-import time
-import pickle
+from math import ceil
+from time import time
 
-print_lock = threading.Lock()
+from camera import CameraModule
 
-cam = CameraModule(1)
-def threaded():
-    time.sleep(1)
+HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
+
+clientaddr = "127.0.0.1", 5801
+
+
+def chunk(frame):
+    chunks = []
+    for i in range(ceil(len(frame) / 1020)):
+        chunks.append(i.to_bytes(4, "big") + frame[1020 * i:1020 * (i + 1)])
+    return chunks
+
+
+def workerRead():
+    global clientaddr
+    HOST, PORT = "0.0.0.0", 5800
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind((HOST, PORT))
+    print("Read socket binded to port", PORT)
 
     while True:
-        # data received from client
-        #data = c.recv(1024)
-        # if not data:
-        #     print('Socket Closed')
-        #
-        #     # lock released on exit
-        #     print_lock.release()
-        #     break
-        #print(cam.frame)
-        #c.send(pickle.dumps(cam.frame))
-        print(pickle.dumps(cam.frame))
+        data, address = s.recvfrom(1024)
+        clientaddr = address
+        print(data, address)
 
 
+class ReadingThread(threading.Thread):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def run(self):
+        global clientaddr
+        HOST, PORT = "0.0.0.0", 5800
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((HOST, PORT))
+
+        while True:
+            s.listen(5)
+            BUFFER_SIZE = 1024
+
+            conn, addr = s.accept()
+            try:
+                print('Connection address:', addr)
+                clientaddr = addr
+
+                while True:
+                    data = conn.recv(BUFFER_SIZE)
+                    if not data: break
+                    print("received data:", data)
+                    settings = json.loads(data.decode())
+                    print(settings)
+
+                    for i in range(server.cam_num):
+                        getattr(server, 'cameras')[i].camera_module.img_quality = settings['cam' + str(i)]['quality']
+                        getattr(server, 'cameras')[i].camera_module.screen_size = settings['cam' + str(i)]['resolution']
+            finally:
+                conn.close()
 
 
+class SendingThread(threading.Thread):
+    def __init__(self, camera_number, camera_module, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.camera_number = camera_number
+        self.camera_module = camera_module
 
-        # connection closed
-    #c.close()
+    def run(self):
+        global clientaddr
+        HOST, PORT = "0.0.0.0", (5800 + self.camera_number + 1)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind((HOST, PORT))
+        print("Write socket binded to port", PORT)
+        frameIndex = 0
+        threading.Thread(target=self.camera_module.start_capture, args=[]).start()
 
-if __name__ == "__main__":
+        while True:
+            if self.camera_module.encframe is not None:
+                # print(clientaddr)
+                # print(len(cam.encframe))
+                # print(self.camera_module.screen_size)
+                chunks = chunk(self.camera_module.encframe)
+                times = struct.pack('>IIdd', int(ceil(len(self.camera_module.encframe) / 1023)), frameIndex,
+                                    self.camera_module.timestamp,
+                                    time() - self.camera_module.timestamp)
+                # print("processing time len: " + str(len(processingtime)))
+                s.sendto(HANDSHAKE_SIGNATURE + times,
+                         (clientaddr[0], (5800 + self.camera_number + 1)))  # Send handshake
+                # s.sendto(times, (clientaddr[0], (5800 + camNum + 1)))
+                frameIndex += 1
 
-    HOST, PORT = "0.0.0.0", 5801
-    # reverse a port on your computer
-    # in our case it is 12345 but it
-    # can be anything
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((HOST, PORT))
-    print("socket binded to port", PORT)
-
-    # put the socket into listening mode
-    s.listen(5)
-    print("socket is listening")
-
-    # c, addr = s.accept()
-    # print('Connected to :', addr[0], ':', addr[1])
-
-    print_lock.acquire()
-    start_new_thread(threaded, ())
-    cam.start_capture()
-
-    # lock acquired by client
+                for i in chunks:
+                    s.sendto(i, (clientaddr[0], (5800 + self.camera_number + 1)))
+                self.camera_module.encframe = None
 
 
+class MainUDP:
+    cam_num = 1
+    cameras = []
+    readThread = ReadingThread()
+    for i in range(cam_num):
+        cameras.append(SendingThread(i, CameraModule(i)))
 
-    # Start a new thread and return its identifier
-    #start_new_thread(threaded, (c,))
+    def __init__(self):
+        for i in range(self.cam_num):
+            self.cameras[i].start()
 
-    s.close()
+        #threading.Thread(target=workerRead, args=[]).start()
+        self.readThread.start()
+
+
+server = MainUDP()
