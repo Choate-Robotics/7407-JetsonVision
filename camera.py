@@ -94,12 +94,21 @@ class ReadingThread(threading.Thread):
                     cam.sendingThread.ip = settings['ip']
             finally:
                 print("Finally TCP Connection Closed")
+                l_onoff = 1
+                l_linger = 0
+                self.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                                     struct.pack('ii', l_onoff, l_linger))
                 self.conn.close()
 
 
 def handler(signum, frame):
     try:
+        l_onoff = 1
+        l_linger = 0
+        cam.readConfig.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                                          struct.pack('ii', l_onoff, l_linger))
         cam.readConfig.conn.close()
+        print('TCP Connection Closed')
         print('TCP Connection Closed')
     except:
         print(traceback.format_exc(), file=sys.stderr, flush=True)

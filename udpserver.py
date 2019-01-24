@@ -55,12 +55,20 @@ class ReadingThread(threading.Thread):
 
             finally:
                 print('Finally TCP Connection Closed')
+                l_onoff = 1
+                l_linger = 0
+                self.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                             struct.pack('ii', l_onoff, l_linger))
                 self.conn.close()
 
 
 
 def handler(signum, frame):
     try:
+        l_onoff = 1
+        l_linger = 0
+        server.readThread.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                             struct.pack('ii', l_onoff, l_linger))
         server.readThread.conn.close()
         print('TCP Connection Closed')
     except:
