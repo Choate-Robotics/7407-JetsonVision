@@ -36,7 +36,12 @@ class ReadingThread(threading.Thread):
             s.listen(5)
             BUFFER_SIZE = 1024
 
+
             self.conn, self.addr = s.accept()
+            l_onoff = 1
+            l_linger = 0
+            self.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                                 struct.pack('ii', l_onoff, l_linger))
             try:
                 print('Connection address:', self.addr)
                 clientaddr = self.addr
@@ -52,13 +57,11 @@ class ReadingThread(threading.Thread):
                     for i in range(server.cam_num):
                         self.writesockets[i].send(data)
 
-
+            except ConnectionResetError:
+                print('Disconnected')
             finally:
                 print('Finally TCP Connection Closed')
-                l_onoff = 1
-                l_linger = 0
-                self.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
-                             struct.pack('ii', l_onoff, l_linger))
+
                 self.conn.close()
 
 
@@ -78,7 +81,7 @@ def handler(signum, frame):
 class MainUDP:
 
     def __init__(self):
-        self.cam_num = 3
+        self.cam_num = 1
         self.readThread = ReadingThread()
         for i in range(self.cam_num):
 

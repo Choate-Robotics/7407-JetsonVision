@@ -80,6 +80,10 @@ class ReadingThread(threading.Thread):
             s.listen(1)
             BUFFER_SIZE = 1024
             self.conn, self.addr = s.accept()
+            l_onoff = 1
+            l_linger = 0
+            self.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                                           struct.pack('ii', l_onoff, l_linger))
 
             try:
                 while True:
@@ -92,23 +96,16 @@ class ReadingThread(threading.Thread):
                     cam.cameraModule.img_quality = settings['cam' + str(self.camNum)]['quality']
                     cam.cameraModule.screen_size = settings['cam' + str(self.camNum)]['resolution']
                     cam.sendingThread.ip = settings['ip']
+            except ConnectionResetError:
+                print('Disconnected')
             finally:
                 print("Finally TCP Connection Closed")
-                l_onoff = 1
-                l_linger = 0
-                self.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
-                                     struct.pack('ii', l_onoff, l_linger))
                 self.conn.close()
 
 
 def handler(signum, frame):
     try:
-        l_onoff = 1
-        l_linger = 0
-        cam.readConfig.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
-                                          struct.pack('ii', l_onoff, l_linger))
         cam.readConfig.conn.close()
-        print('TCP Connection Closed')
         print('TCP Connection Closed')
     except:
         print(traceback.format_exc(), file=sys.stderr, flush=True)
