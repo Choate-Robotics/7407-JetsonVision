@@ -10,11 +10,20 @@ from time import time, sleep
 from multiprocessing import Process, set_start_method
 import signal
 import traceback
+import psutil
 
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
 clientaddr = "127.0.0.1", 5801
 
+def killtree(pid, including_parent=True):
+    parent = psutil.Process(pid)
+    for child in parent.children(recursive=True):
+        print("child", child)
+        child.kill()
+
+    if including_parent:
+        parent.kill()
 
 class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
@@ -36,7 +45,6 @@ class ReadingThread(threading.Thread):
         while True:
             s.listen(5)
             BUFFER_SIZE = 1024
-
 
             self.conn, self.addr = s.accept()
             l_onoff = 1
@@ -62,21 +70,20 @@ class ReadingThread(threading.Thread):
                 print('Disconnected')
             finally:
                 print('Finally TCP Connection Closed')
-
                 self.conn.close()
 
 
 
 def handler(signum, frame):
     try:
-        l_onoff = 1
-        l_linger = 0
-        server.readThread.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
-                             struct.pack('ii', l_onoff, l_linger))
+
         server.readThread.conn.close()
-        print('TCP Connection Closed')
+        print('Handler TCP Connection Closed')
     except:
-        print(traceback.format_exc(), file=sys.stderr, flush=True)
+        print('UDP No TCP Connection to Close')
+    for process in server.processes:
+        process.kill()
+    sys.exit()
 
 def startupcam(i):
     os.execv(sys.executable, ['python', './camera.py', str(i), '&'])
@@ -86,12 +93,15 @@ class MainUDP:
     def __init__(self):
         self.cam_num = int(sys.argv[1])
         self.readThread = ReadingThread()
+        self.processes = []
         for i in range(self.cam_num):
 
             if os.path.exists("./socket%d.sock"%i):
                 os.remove("./socket%d.sock"%i)
             #set_start_method('spawn', force=True)
-            Process(target=startupcam, args=[i,]).start()
+            p = Process(target=startupcam, args=[i, ])
+            p.start()
+            self.processes.append(p)
 
         #flag = False
         while not all(os.path.exists("./socket%d.sock"%i) for i in range(self.cam_num)):pass
