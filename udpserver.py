@@ -3,10 +3,11 @@ import json
 import socket
 import struct
 import threading
+import dill
 from math import ceil
 import sys, os
 from time import time, sleep
-from multiprocessing import Process
+from multiprocessing import Process, set_start_method
 import signal
 import traceback
 
@@ -77,6 +78,8 @@ def handler(signum, frame):
     except:
         print(traceback.format_exc(), file=sys.stderr, flush=True)
 
+def startupcam(i):
+    os.execv(sys.executable, ['python', './camera.py', str(i)])
 
 class MainUDP:
 
@@ -87,16 +90,16 @@ class MainUDP:
 
             if os.path.exists("/tmp/socket%d.sock"%i):
                 os.remove("/tmp/socket%d.sock"%i)
-
-            Process(target=lambda:os.execv(sys.executable, ['python', './camera.py', str(i)])).start()
+            set_start_method('spawn', force=True)
+            Process(target=startupcam, args=[i,]).start()
 
         #flag = False
         while not all(os.path.exists("/tmp/socket%d.sock"%i) for i in range(self.cam_num)):pass
 
         self.readThread.start()
 
-
-server = MainUDP()
+if __name__ == '__main__':
+    server = MainUDP()
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)

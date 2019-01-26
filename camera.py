@@ -114,8 +114,9 @@ def handler(signum, frame):
 class cameraWrapper:
 
     def __init__(self):
-        print(sys.argv)
+
         self.camNum = int(sys.argv[1])
+        print('Camera', self.camNum, 'started')
         self.cameraModule = CameraModule(self.camNum)
         self.sendingThread = SendingThread(self.camNum, self.cameraModule)
         self.readConfig = ReadingThread()
