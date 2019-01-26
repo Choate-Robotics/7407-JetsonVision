@@ -76,7 +76,7 @@ def handler(signum, frame):
     sys.exit()
 
 def startupcam(i):
-    os.execv(sys.executable, ['python', './camera.py', str(i), '&'])
+    os.execv(sys.executable, ['python', './camera.py', str(i)])
 
 class MainUDP:
 
