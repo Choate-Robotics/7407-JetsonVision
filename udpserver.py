@@ -30,7 +30,7 @@ class ReadingThread(threading.Thread):
         self.writesockets = []
         for i in range(int(sys.argv[1])):
             self.writesockets.append(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM))
-            self.writesockets[i-1].connect("./socket" + str(i) + ".sock")
+            self.writesockets[i].connect("./socket" + str(i) + ".sock")
 
 
         while True:
@@ -79,7 +79,7 @@ def handler(signum, frame):
         print(traceback.format_exc(), file=sys.stderr, flush=True)
 
 def startupcam(i):
-    os.execv(sys.executable, ['python', './camera.py', str(i)])
+    os.execv(sys.executable, ['python', './camera.py', str(i), '&'])
 
 class MainUDP:
 
