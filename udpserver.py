@@ -28,9 +28,9 @@ class ReadingThread(threading.Thread):
         s.bind((HOST, PORT))
 
         self.writesockets = []
-        for i in range(server.cam_num):
+        for i in range(int(sys.argv[1])):
             self.writesockets.append(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM))
-            self.writesockets[i].connect("/tmp/socket" + str(i) + ".sock")
+            self.writesockets[i-1].connect("./socket" + str(i) + ".sock")
 
 
         while True:
@@ -55,7 +55,7 @@ class ReadingThread(threading.Thread):
                     settings['ip'] = self.addr[0]
                     data = json.dumps(settings).encode()
 
-                    for i in range(server.cam_num):
+                    for i in range(int(sys.argv[1])):
                         self.writesockets[i].send(data)
 
             except ConnectionResetError:
@@ -84,22 +84,21 @@ def startupcam(i):
 class MainUDP:
 
     def __init__(self):
-        self.cam_num = 1
+        self.cam_num = int(sys.argv[1])
         self.readThread = ReadingThread()
         for i in range(self.cam_num):
 
-            if os.path.exists("/tmp/socket%d.sock"%i):
-                os.remove("/tmp/socket%d.sock"%i)
-            set_start_method('spawn', force=True)
+            if os.path.exists("./socket%d.sock"%i):
+                os.remove("./socket%d.sock"%i)
+            #set_start_method('spawn', force=True)
             Process(target=startupcam, args=[i,]).start()
 
         #flag = False
-        while not all(os.path.exists("/tmp/socket%d.sock"%i) for i in range(self.cam_num)):pass
+        while not all(os.path.exists("./socket%d.sock"%i) for i in range(self.cam_num)):pass
 
         self.readThread.start()
 
-if __name__ == '__main__':
-    server = MainUDP()
+server = MainUDP()
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)

@@ -20,7 +20,7 @@ def chunk(frame):
 
 class CameraModule:
     def __init__(self, camNum):
-        self.caps = cv2.VideoCapture(camNum)
+        self.caps = cv2.VideoCapture(camNum+1)
         self.large_cam = 0
         self.frame = []
         self.encframe = None
@@ -74,7 +74,7 @@ class ReadingThread(threading.Thread):
 
     def run(self):
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.bind("/tmp/socket" + str(self.camNum) + ".sock")
+        s.bind("./socket" + str(self.camNum) + ".sock")
 
         while True:
             s.listen(1)
