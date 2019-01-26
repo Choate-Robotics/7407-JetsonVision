@@ -10,20 +10,10 @@ from time import time, sleep
 from multiprocessing import Process, set_start_method
 import signal
 import traceback
-import psutil
 
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
 clientaddr = "127.0.0.1", 5801
-
-def killtree(pid, including_parent=True):
-    parent = psutil.Process(pid)
-    for child in parent.children(recursive=True):
-        print("child", child)
-        child.kill()
-
-    if including_parent:
-        parent.kill()
 
 class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
