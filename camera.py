@@ -92,22 +92,23 @@ class ReadingThread(threading.Thread):
                     if not data: break
                     print("received data:", data)
                     settings = json.loads(data.decode())
-                    print(settings)
-
+                    print('Settings Updated')
                     cam.cameraModule.img_quality = settings['cam' + str(self.camNum)]['quality']
                     cam.cameraModule.screen_size = settings['cam' + str(self.camNum)]['resolution']
                     cam.sendingThread.ip = settings['ip']
             except ConnectionResetError:
                 print('Disconnected')
+            except OSError:
+                print('Camera Killed Read Thread')
             finally:
-                print("Finally TCP Connection Closed")
+                print("Camera Finally TCP Connection Closed")
                 self.conn.close()
 
 
 def handler(signum, frame):
     try:
         cam.readConfig.conn.close()
-        print('TCP Connection Closed')
+        print('Camera Handler TCP Connection Closed')
     except:
         print(traceback.format_exc(), file=sys.stderr, flush=True)
 

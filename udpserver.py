@@ -14,6 +14,7 @@ import traceback
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
 clientaddr = "127.0.0.1", 5801
+cam_num = 2
 
 class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
@@ -27,7 +28,7 @@ class ReadingThread(threading.Thread):
         s.bind((HOST, PORT))
 
         self.writesockets = []
-        for i in range(int(sys.argv[1])):
+        for i in range(cam_num):
             self.writesockets.append(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM))
             self.writesockets[i].connect("./socket" + str(i) + ".sock")
 
@@ -53,7 +54,7 @@ class ReadingThread(threading.Thread):
                     settings['ip'] = self.addr[0]
                     data = json.dumps(settings).encode()
 
-                    for i in range(int(sys.argv[1])):
+                    for i in range(cam_num):
                         self.writesockets[i].send(data)
 
             except ConnectionResetError:
@@ -66,7 +67,6 @@ class ReadingThread(threading.Thread):
 
 def handler(signum, frame):
     try:
-
         server.readThread.conn.close()
         print('Handler TCP Connection Closed')
     except:
@@ -81,7 +81,7 @@ def startupcam(i):
 class MainUDP:
 
     def __init__(self):
-        self.cam_num = int(sys.argv[1])
+        self.cam_num = cam_num
         self.readThread = ReadingThread()
         self.processes = []
         for i in range(self.cam_num):
