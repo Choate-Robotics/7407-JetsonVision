@@ -3,18 +3,26 @@ import json
 import socket
 import struct
 import threading
-import dill
 from math import ceil
 import sys, os
 from time import time, sleep
 from multiprocessing import Process, set_start_method
 import signal
 import traceback
+import time
+from networktables import NetworkTables
+
+# To see messages from networktables, you must setup logging
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+
 
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
 clientaddr = "127.0.0.1", 5801
-cam_num = 2
+cam_num = 1
 
 class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
@@ -64,6 +72,15 @@ class ReadingThread(threading.Thread):
                 self.conn.close()
 
 
+class NetworkTablesThread(threading.Thread):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        NetworkTables.initialize()
+
+    def run(self):
+        rd = NetworkTables.getTable("RobotData")
+
+
 
 def handler(signum, frame):
     try:
@@ -76,7 +93,7 @@ def handler(signum, frame):
     sys.exit()
 
 def startupcam(i):
-    os.execv(sys.executable, ['python', './camera.py', str(i)])
+    os.execv(sys.executable, ['python', './camera_process.py', str(i)])
 
 class MainUDP:
 

@@ -5,12 +5,16 @@ from processors import Frame
 import threading, socket
 import struct
 import os, sys
-from math import ceil
+from math import ceil, floor
 import json
 import signal
 import traceback
+import cProfile
+from goprocam import GoProCamera
+from goprocam import constants
 
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
+
 
 def chunk(frame):
     chunks = []
@@ -18,54 +22,64 @@ def chunk(frame):
         chunks.append(i.to_bytes(4, "big") + frame[1020 * i:1020 * (i + 1)])
     return chunks
 
+
 class CameraModule:
     def __init__(self, camNum):
-        self.caps = cv2.VideoCapture(camNum+1)
-        self.caps.set(cv2.CAP_PROP_FPS, 30)
+        self.caps = cv2.VideoCapture(camNum)
+        self.caps.set(cv2.CAP_PROP_FPS, 60)
         self.large_cam = 0
         self.frame = []
         self.encframe = None
         self.timestamp = None
         self.img_quality = 25
         self.screen_size = 240
+        self.camReady = False
 
     def start_capture(self):
         while True:
             self.timestamp = time()
             self.frame = Frame(self.caps.read()[1]).GaussianBlur(3).resize(self.screen_size)
             self.encframe = self.frame.conv_jpeg(self.img_quality)
+            self.camReady = True
 
     def __del__(self):
         self.caps.release()
 
 class SendingThread(threading.Thread):
-    def __init__(self, camera_number, camera_module, *args, **kwargs):
+    def __init__(self, camera_number, camera_module, test, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.camera_number = camera_number
         self.camera_module = camera_module
+        self.test = test
         self.ip = '127.0.0.1'
 
     def run(self):
-        HOST, PORT = "0.0.0.0", (5800 + self.camera_number + 1)
+        if self.test == 0:
+            HOST, PORT = "0.0.0.0", (5800 + self.camera_number + 1)
+        else:
+            HOST, PORT = "0.0.0.0", (5800 + self.camera_number + 2)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind((HOST, PORT))
         print("Write socket binded to port", PORT)
         frameIndex = 0
-        threading.Thread(target=self.camera_module.start_capture, args=[]).start()
 
         while True:
-            if self.camera_module.encframe is not None:
+            if self.camera_module.camReady:
                 chunks = chunk(self.camera_module.encframe)
+
+
                 times = struct.pack('>IIdd', int(ceil(len(self.camera_module.encframe) / 1020)), frameIndex,
                                     self.camera_module.timestamp,
                                     time() - self.camera_module.timestamp)
                 s.sendto(HANDSHAKE_SIGNATURE + times,
                          (self.ip, (5800 + self.camera_number + 1)))  # Send handshake
+
                 frameIndex += 1
 
                 for i in chunks:
                     s.sendto(i, (self.ip, (5800 + self.camera_number + 1)))
-                self.camera_module.encframe = None
+                self.camera_module.camReady = False
+
 
 
 class ReadingThread(threading.Thread):
@@ -120,7 +134,7 @@ class cameraWrapper:
         self.camNum = int(sys.argv[1])
         print('Camera', self.camNum, 'started')
         self.cameraModule = CameraModule(self.camNum)
-        self.sendingThread = SendingThread(self.camNum, self.cameraModule)
+        self.sendingThread = SendingThread(self.camNum, self.cameraModule, 0)
         self.readConfig = ReadingThread()
 
 cam = cameraWrapper()
@@ -130,6 +144,10 @@ cam.sendingThread.start()
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGQUIT, handler)
+
+cam.cameraModule.start_capture()
+
+
 
 
 
