@@ -17,7 +17,26 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-
+DEFAULT_CONFIGURATIONS = {
+            'cameras': {
+                'cam0': {
+                    'resolution': 240,
+                    'quality'   : 25
+                },
+                'cam1': {
+                    'resolution': 240,
+                    'quality'   : 25
+                },
+                'cam2': {
+                    'resolution': 240,
+                    'quality'   : 25
+                },
+                'cam3': {
+                    'resolution': 240,
+                    'quality'   : 25
+                }
+            }
+        }
 
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
@@ -43,7 +62,7 @@ class ReadingThread(threading.Thread):
 
         while True:
             s.listen(5)
-            BUFFER_SIZE = 1024
+            BUFFER_SIZE = 2048
 
             self.conn, self.addr = s.accept()
             l_onoff = 1
@@ -64,6 +83,8 @@ class ReadingThread(threading.Thread):
 
                     for i in range(cam_num):
                         self.writesockets[i].send(data)
+
+                    data = None
 
             except ConnectionResetError:
                 print('Disconnected')

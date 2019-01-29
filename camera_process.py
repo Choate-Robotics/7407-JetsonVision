@@ -10,8 +10,6 @@ import json
 import signal
 import traceback
 import cProfile
-from goprocam import GoProCamera
-from goprocam import constants
 
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
@@ -104,7 +102,7 @@ class ReadingThread(threading.Thread):
                 while True:
                     data = self.conn.recv(BUFFER_SIZE)
                     if not data: break
-                    print("received data:", data)
+                    print("Camera",self.camNum,"received data:", data)
                     settings = json.loads(data.decode())
                     print('Settings Updated')
                     cam.cameraModule.img_quality = settings['cam' + str(self.camNum)]['quality']
