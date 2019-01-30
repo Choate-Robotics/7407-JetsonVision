@@ -23,8 +23,8 @@ def chunk(frame):
 
 class CameraModule:
     def __init__(self, camNum):
-        self.caps = cv2.VideoCapture(camNum)
-        self.caps.set(cv2.CAP_PROP_FPS, 60)
+        self.caps = cv2.VideoCapture(camNum+1)
+        self.caps.set(cv2.CAP_PROP_FPS, 30)
         self.large_cam = 0
         self.frame = []
         self.encframe = None
