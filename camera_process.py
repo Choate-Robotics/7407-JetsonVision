@@ -84,6 +84,7 @@ class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.camNum = int(sys.argv[1])
+        self.pastData = None
 
     def run(self):
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -101,6 +102,7 @@ class ReadingThread(threading.Thread):
             try:
                 while True:
                     data = self.conn.recv(BUFFER_SIZE)
+                    if data == self.pastData: continue
                     if not data: break
                     print("Camera",self.camNum,"received data:", data)
                     settings = json.loads(data.decode())
@@ -108,6 +110,8 @@ class ReadingThread(threading.Thread):
                     cam.cameraModule.img_quality = settings['cam' + str(self.camNum)]['quality']
                     cam.cameraModule.screen_size = settings['cam' + str(self.camNum)]['resolution']
                     cam.sendingThread.ip = settings['ip']
+                    self.pastData = data
+
             except ConnectionResetError:
                 print('Disconnected')
             except OSError:

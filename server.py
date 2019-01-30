@@ -46,6 +46,7 @@ cam_num = 1
 class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.pastData = None
 
     def run(self):
         global clientaddr
@@ -75,6 +76,7 @@ class ReadingThread(threading.Thread):
 
                 while True:
                     data = self.conn.recv(BUFFER_SIZE)
+                    if data == self.pastData: continue
                     if not data: break
                     print("received data:", data)
                     settings = json.loads(data.decode())
@@ -85,6 +87,7 @@ class ReadingThread(threading.Thread):
                         self.writesockets[i].send(data)
 
                     data = None
+                    self.pastData = data
 
             except ConnectionResetError:
                 print('Disconnected')
