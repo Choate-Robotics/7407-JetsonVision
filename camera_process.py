@@ -34,14 +34,15 @@ class CameraModule:
         self.camReady = False
 
     def start_capture(self):
-        while True:
-            self.timestamp = time()
-            self.frame = Frame(self.caps.read()[1]).GaussianBlur(3).resize(self.screen_size)
-            self.encframe = self.frame.conv_jpeg(self.img_quality)
-            self.camReady = True
+        try:
+            while True:
+                self.timestamp = time()
+                self.frame = Frame(self.caps.read()[1]).GaussianBlur(3).resize(self.screen_size)
+                self.encframe = self.frame.conv_jpeg(self.img_quality)
+                self.camReady = True
+        finally:
+            self.caps.release()
 
-    def __del__(self):
-        self.caps.release()
 
 class SendingThread(threading.Thread):
     def __init__(self, camera_number, camera_module, test, *args, **kwargs):
