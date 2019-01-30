@@ -91,7 +91,7 @@ class ReadingThread(threading.Thread):
         s.bind("./socket" + str(self.camNum) + ".sock")
 
         while True:
-            s.listen(1)
+            s.listen(2)
             BUFFER_SIZE = 1024
             self.conn, self.addr = s.accept()
             l_onoff = 1
@@ -105,12 +105,18 @@ class ReadingThread(threading.Thread):
                     if data == self.pastData: continue
                     if not data: break
                     print("Camera",self.camNum,"received data:", data)
-                    settings = json.loads(data.decode())
-                    print('Settings Updated')
-                    cam.cameraModule.img_quality = settings['cam' + str(self.camNum)]['quality']
-                    cam.cameraModule.screen_size = settings['cam' + str(self.camNum)]['resolution']
-                    cam.sendingThread.ip = settings['ip']
-                    self.pastData = data
+                    try:
+                        dec = data.decode().split('|')
+                        print(dec)
+                        settings = json.loads(dec[-2])
+                        cam.cameraModule.img_quality = settings['cam' + str(self.camNum)]['quality']
+                        cam.cameraModule.screen_size = settings['cam' + str(self.camNum)]['resolution']
+                        cam.sendingThread.ip = settings['ip']
+                        self.pastData = data
+                        print('Settings Updated')
+                    except:
+                        print(traceback.format_exc(), file=sys.stderr, flush=True)
+
 
             except ConnectionResetError:
                 print('Disconnected')

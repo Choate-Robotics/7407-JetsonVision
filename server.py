@@ -47,6 +47,7 @@ class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pastData = None
+        self.writesockets = []
 
     def run(self):
         global clientaddr
@@ -55,7 +56,7 @@ class ReadingThread(threading.Thread):
         print("Read socket binded to port ", PORT)
         s.bind((HOST, PORT))
 
-        self.writesockets = []
+
         for i in range(cam_num):
             self.writesockets.append(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM))
             self.writesockets[i].connect("./socket" + str(i) + ".sock")
@@ -63,13 +64,11 @@ class ReadingThread(threading.Thread):
 
         while True:
             s.listen(5)
-            BUFFER_SIZE = 2048
+            BUFFER_SIZE = 1024
 
             self.conn, self.addr = s.accept()
-            l_onoff = 1
-            l_linger = 0
             self.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
-                                 struct.pack('ii', l_onoff, l_linger))
+                                 struct.pack('ii', 1, 0))
             try:
                 print('Connection address:', self.addr)
                 clientaddr = self.addr
@@ -78,22 +77,27 @@ class ReadingThread(threading.Thread):
                     data = self.conn.recv(BUFFER_SIZE)
                     if data == self.pastData: continue
                     if not data: break
+
                     print("received data:", data)
-                    settings = json.loads(data.decode())
-                    settings['ip'] = self.addr[0]
-                    data = json.dumps(settings).encode()
+                    try:
+                        dec = data.decode().split('|')
+                        settings = json.loads(dec[-2])
+                        settings['ip'] = self.addr[0]
+                        data = json.dumps(settings).encode()
+                        for i in range(cam_num):
+                            self.writesockets[i].send(data+b'|')
+                        self.pastData = data
+                    except:
+                        print(traceback.format_exc(), file=sys.stderr, flush=True)
 
-                    for i in range(cam_num):
-                        self.writesockets[i].send(data)
-
-                    data = None
-                    self.pastData = data
 
             except ConnectionResetError:
                 print('Disconnected')
             finally:
                 print('Finally TCP Connection Closed')
                 self.conn.close()
+
+            self.pastData = None
 
 
 class NetworkTablesThread(threading.Thread):
