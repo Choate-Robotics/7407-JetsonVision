@@ -20,10 +20,9 @@ def chunk(frame):
         chunks.append(i.to_bytes(4, "big") + frame[1020 * i:1020 * (i + 1)])
     return chunks
 
-
 class CameraModule:
     def __init__(self, camNum):
-        self.caps = cv2.VideoCapture(camNum+1)
+        self.caps = cv2.VideoCapture(camNum, cv2.CAP_FFMPEG)
         self.caps.set(cv2.CAP_PROP_FPS, 30)
         self.large_cam = 0
         self.frame = []

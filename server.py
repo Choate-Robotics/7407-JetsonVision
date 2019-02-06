@@ -41,7 +41,7 @@ DEFAULT_CONFIGURATIONS = {
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
 clientaddr = "127.0.0.1", 5801
-cam_num = 3
+cam_num = 1
 
 class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
