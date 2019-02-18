@@ -43,6 +43,7 @@ class VisionPipeline:
                 - A y-angle of 0 degrees means that the vision tapes are parallel to the camera
         """
         bitmask = self._generate_bitmask_camera(image)
+        #cv2.imshow('img', bitmask)
 
         contours = self._get_contours(bitmask)
         corners_subpixel = self._get_corners(contours, bitmask)
@@ -61,12 +62,11 @@ class VisionPipeline:
         :param image: The image (3 channel)
         :return: The bitmask where the stripes of vision tape are white (1 channel)
         """
-        self.logger.debug("Generating bitmask (camera)")
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         im = cv2.inRange(  # TODO: Make constants for lower and upper bounds
             hsv_image,
-            (0, 0, 181),
-            (200, 40, 255)
+            (70, 0, 250),
+            (180, 255, 255)
         )
         closing = cv2.morphologyEx(im, cv2.MORPH_CLOSE, np.ones((3, 3)))
         return closing
@@ -110,6 +110,10 @@ class VisionPipeline:
         :return: Subpixel-accurate corner locations
         """
         print("Finding corners on image")
+        contours = contours[:2]
+        rects = [cv2.minAreaRect(cnt) for cnt in contours]
+        boxes = [cv2.boxPoints(rect) for rect in contours]
+
 
         contours = [x.reshape(-1, 2) for x in contours[:2]]
 
@@ -140,18 +144,11 @@ class VisionPipeline:
         print("Running solvePnPRansac")
 
         # NOTE: If using solvePnPRansac, retvals are retval, rvec, tvec, inliers
-        if self.calibration_info.fisheye:
-            undistorted_points = cv2.fisheye.undistortPoints(corners_subpixel, self.calibration_info.camera_matrix,
-                                                             self.calibration_info.dist_coeffs)
-            retval, rvec, tvec = cv2.solvePnP(constants.VISION_TAPE_OBJECT_POINTS,
-                                              undistorted_points,
-                                              self.calibration_info.camera_matrix,
-                                              None)  # Distortion vector is none because we already undistorted the image
-        else:
-            retval, rvec, tvec = cv2.solvePnP(constants.VISION_TAPE_OBJECT_POINTS,
-                                              corners_subpixel,
-                                              self.calibration_info.camera_matrix,
-                                              self.calibration_info.dist_coeffs)
+
+        retval, rvec, tvec = cv2.solvePnP(constants.VISION_TAPE_OBJECT_POINTS,
+                                          corners_subpixel,
+                                          self.calibration_info.camera_matrix,
+                                          self.calibration_info.dist_coeffs)
 
         dist = np.linalg.norm(tvec)
         return rvec, tvec, dist

@@ -22,8 +22,10 @@ def chunk(frame):
 
 class CameraModule:
     def __init__(self, camNum):
-        self.caps = cv2.VideoCapture(camNum, cv2.CAP_FFMPEG)
-        self.caps.set(cv2.CAP_PROP_FPS, 30)
+        self.caps = cv2.VideoCapture(camNum)
+        #cv2.CAP_DS
+        #self.caps.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        #self.caps.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.large_cam = 0
         self.frame = []
         self.encframe = None
@@ -31,12 +33,15 @@ class CameraModule:
         self.img_quality = 25
         self.screen_size = 240
         self.camReady = False
+        self.camNum = camNum
 
     def start_capture(self):
         try:
             while True:
                 self.timestamp = time()
                 self.frame = Frame(self.caps.read()[1]).GaussianBlur(3).resize(self.screen_size)
+                if self.camNum == 0:
+                    self.frame = self.frame.flip_img()
                 self.encframe = self.frame.conv_jpeg(self.img_quality)
                 self.camReady = True
         finally:

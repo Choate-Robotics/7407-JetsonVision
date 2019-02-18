@@ -15,6 +15,10 @@ class Frame:
         self.frame = cv2.GaussianBlur(self.frame, (radius, radius), 0)
         return self
 
+    def flip_img(self):
+        self.frame = cv2.flip(self.frame, 0)
+        return self
+
     def conv_jpeg(self, quality):
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
         result, encimg = cv2.imencode('.jpg', self.frame, encode_param)

@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import socket
 import constants
+import math
 
 def generate_socket_msg(x, y, angle):
     return bytes(str(x), 'utf-8') + b',' + \
@@ -13,7 +14,9 @@ def generate_socket_msg(x, y, angle):
 
 
 # TODO: Store calib_fname in environment variable or something
-cap = cv2.VideoCapture(constants.CAMERA_ID)
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+cap.set(cv2.CAP_PROP_EXPOSURE, -6)
 vision_pipeline = vision_pipeline.VisionPipeline(calib_fname=constants.CALIBRATION_FILE_LOCATION)
 
 def exit():
@@ -29,14 +32,17 @@ while True:
 
     # Invert image (assuming that tapes are black and background is white)
     # TODO: Remove inversion
-    image = cv2.bitwise_not(image)
-    cv2.imshow("img", image)
+    #image = cv2.bitwise_not(image)
+    #cv2.imshow("img", image)
 
     # Process image
     contours, corners_subpixel, rvecs, tvecs, dist, euler_angles = vision_pipeline.process_image(image)
+    # rect = cv2.minAreaRect(contours)
+    # box = cv2.boxPoints(rect)
+    # box = np.int0(box)
 
     contours_img = cv2.drawContours(image, contours, -1, (0, 255, 0), thickness=3)
-    cv2.imshow("contours", contours_img)
+    #cv2.imshow("contours", contours_img)
 
     center = np.array([
         [0, 0, 0],
@@ -54,10 +60,10 @@ while True:
 
         for corner in corners_subpixel:
             corner_img = cv2.circle(corner_img, tuple(corner), 3, (255, 0, 0), thickness=3)
+        if dist > 10:
+            cv2.imshow("corner_img", corner_img)
 
-        cv2.imshow("corner_img", corner_img)
-
-        # print(euler_angles)
-        print("dist: {0:0.2f} | angle (rad): {1:0.2f}".format(dist, euler_angles[1]))
+        # print(euler_angles) g
+            print("dist: {0:0.2f} | angle (degrees): {1:0.2f}".format(dist, euler_angles[1]*180/math.pi))
 
     cv2.waitKey(1000 // 30)

@@ -8,7 +8,7 @@ import constants
 # termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-dim = (9, 6)
+dim = (7, 7)
 gray = None
 # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
 objp = np.zeros((dim[0] * dim[1], 3), np.float32)
@@ -27,7 +27,7 @@ while len(imgpoints) < 20:
     _, img = cap.read()
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # Find the chess board corners
-    cv2.imshow("cam", img)
+    cv2.imshow("cam", gray)
     cv2.waitKey(1000 // 30)
     ret, corners = cv2.findChessboardCorners(gray, dim, None)
     # If found, add object points, image points (after refining them)

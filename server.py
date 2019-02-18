@@ -52,9 +52,8 @@ class ReadingThread(threading.Thread):
     def run(self):
         global clientaddr
         HOST, PORT = "0.0.0.0", 5800
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Read socket binded to port ", PORT)
-        s.bind((HOST, PORT))
+
 
 
         for i in range(cam_num):
@@ -63,15 +62,28 @@ class ReadingThread(threading.Thread):
 
 
         while True:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind((HOST, PORT))
             s.listen(5)
             BUFFER_SIZE = 1024
 
             self.conn, self.addr = s.accept()
             self.conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
                                  struct.pack('ii', 1, 0))
+
+
+
             try:
                 print('Connection address:', self.addr)
                 clientaddr = self.addr
+
+                t0 = time.time()
+                self.conn.send(struct.pack('i',1))
+                t1,t2 = struct.unpack('dd',self.conn.recv(16))
+                t3 = time.time()
+                offset = ((t1-t0)+(t2-t3))/2
+                print(offset)
+
 
                 while True:
                     data = self.conn.recv(BUFFER_SIZE)
@@ -96,7 +108,6 @@ class ReadingThread(threading.Thread):
             finally:
                 print('Finally TCP Connection Closed')
                 self.conn.close()
-
             self.pastData = None
 
 
@@ -139,7 +150,7 @@ class MainUDP:
             self.processes.append(p)
 
         #flag = False
-        while not all(os.path.exists("./socket%d.sock"%i) for i in range(self.cam_num)):pass
+        while not all(os.path.exists("./socket%d.sock"%i) for i in range(self.cam_num)): pass
 
         self.readThread.start()
 
