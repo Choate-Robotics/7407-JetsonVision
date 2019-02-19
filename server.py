@@ -126,7 +126,7 @@ def handler(signum, frame):
         server.readThread.conn.close()
         print('Handler TCP Connection Closed')
     except:
-        print('UDP No TCP Connection to Close')
+        print('TCP Connection to Close')
     for process in server.processes:
         process.kill()
     sys.exit()

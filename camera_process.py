@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from time import time
-from processors import Frame
+from processors import VideoStreamingFrame,AngleDetectionFrame
 import threading, socket
 import struct
 import os, sys
@@ -39,9 +39,12 @@ class CameraModule:
         try:
             while True:
                 self.timestamp = time()
-                self.frame = Frame(self.caps.read()[1]).GaussianBlur(3).resize(self.screen_size)
                 if self.camNum == 0:
-                    self.frame = self.frame.flip_img()
+                    self.frame=AngleDetectionFrame(self.caps.read()[1]).resize(self.screen_size)
+                    self.frame = self.frame
+                    
+                else:
+                    self.frame = VideoStreamingFrame(self.caps.read()[1]).GaussianBlur(3).resize(self.screen_size)
                 self.encframe = self.frame.conv_jpeg(self.img_quality)
                 self.camReady = True
         finally:
