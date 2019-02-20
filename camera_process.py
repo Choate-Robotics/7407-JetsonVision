@@ -22,7 +22,10 @@ def chunk(frame):
 
 class CameraModule:
     def __init__(self, camNum):
-        self.caps = cv2.VideoCapture(camNum)
+        if os.uname().nodename == 'tegra-ubuntu':
+            self.caps = cv2.VideoCapture(camNum+1,cv2.CAP_V4L)
+        else:
+            self.caps = cv2.VideoCapture(camNum)
         #cv2.CAP_DS
         #self.caps.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
         #self.caps.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
@@ -41,8 +44,6 @@ class CameraModule:
                 self.timestamp = time()
                 if self.camNum == 0:
                     self.frame=AngleDetectionFrame(self.caps.read()[1]).resize(self.screen_size)
-                    self.frame = self.frame
-                    
                 else:
                     self.frame = VideoStreamingFrame(self.caps.read()[1]).GaussianBlur(3).resize(self.screen_size)
                 self.encframe = self.frame.conv_jpeg(self.img_quality)
