@@ -107,3 +107,9 @@ venv.bak/
 .DS_Store
 
 cmake-build-debug/
+CMakeFiles/
+CMakeCache.txt
+Makefile
+Vision
+Vision.cbp
+cmake_install.cmake
