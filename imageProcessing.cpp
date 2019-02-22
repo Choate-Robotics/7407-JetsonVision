@@ -42,6 +42,16 @@ public:
         processFrame();
         return this->frame;
     }
+
+    std::vector<uchar> getCompressedFrame(int quality){
+        std::vector<uchar> buf;
+        cv::imencode(".jpg",frame,buf,std::vector<int>{
+            cv::IMWRITE_JPEG_QUALITY, quality,
+            cv::IMWRITE_JPEG_OPTIMIZE, 1,
+
+        });
+        return buf;
+    }
 };
 
 class AngleDetection: public VideoStream{
@@ -107,6 +117,7 @@ int main() {
     for (;;) {
         auto start= std::chrono::high_resolution_clock::now();
         auto img=v.getFrame();
+        auto buf=v.getCompressedFrame(25);
         //img = processImage(img);
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
