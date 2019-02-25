@@ -46,15 +46,45 @@ class VisionPipeline:
         #cv2.imshow('img', bitmask)
 
         contours = self._get_contours(bitmask)
-        corners_subpixel = self._get_corners(contours, bitmask)
+        rects = self._get_rectangles(contours)
+        boxes = [np.int0(cv2.boxPoints(rect)) for rect in rects]
+        boxesarr = []
+
+        if len(boxes) > 1 and boxes[0][0][0] > boxes[1][0][0]:
+            rects = np.flip(rects, 0)
+            cv2.imwrite('test_img.jpg', image)
+
+        corners = self._get_corners(contours, bitmask)
+
+        print(boxes)
+
+        if len(boxes) > 1:
+            box1 = boxes[0]
+            box2 = boxes[1]
+            box1p1 = sorted(box1, key=lambda tup: tup[0])[0]
+            box1p2 = sorted(box1, key=lambda tup: tup[1])[0]
+            box2p1 = sorted(box2, key=lambda tup: tup[0])[-1]
+            box2p2 = sorted(box2, key=lambda tup: tup[1])[0]
+
+            boxpoints = np.array([box1p1, box1p2, box2p1, box2p2], dtype=np.int)
+            boxesarr = [[i] for i in boxpoints]
+
+            print(boxesarr)
+
+        #cv2.imshow('boxes', cv2.drawContours(image, boxes, -1, (0, 0, 255), 2))
+
+        print(corners)
+
 
         try:
-            rvec, tvec, dist = self._estimate_pose(corners_subpixel)
+            rvec, tvec, dist = self._estimate_pose(np.array(boxesarr, dtype=np.double))
             euler_angles = self._rodrigues_to_euler_angles(rvec)
         except cv2.error:
             rvec, tvec, dist, euler_angles = None, None, None, None
+        except IndexError:
+            rvec, tvec, dist, euler_angles = None, None, None, None
 
-        return contours, corners_subpixel.reshape(-1, 2), rvec, tvec, dist, euler_angles
+        return contours, boxes, rvec, tvec, dist, euler_angles
 
     def _generate_bitmask_camera(self, image: np.array) -> np.array:
         """
@@ -102,6 +132,12 @@ class VisionPipeline:
         candidates.sort(key=lambda cnt: cv2.contourArea(cnt), reverse=True)
         return candidates
 
+    def _get_rectangles(self, contours: List[np.array]) -> np.array:
+        contours = contours[:2]
+        rects = [cv2.minAreaRect(cnt) for cnt in contours]
+        #boxes = [np.int0(cv2.boxPoints(rect)) for rect in rects]
+        return rects
+
     def _get_corners(self, contours: List[np.array], bitmask: np.array) -> np.array:
         """
         Find the image coordinates of the corners of the vision target
@@ -110,9 +146,6 @@ class VisionPipeline:
         :return: Subpixel-accurate corner locations
         """
         print("Finding corners on image")
-        contours = contours[:2]
-        rects = [cv2.minAreaRect(cnt) for cnt in contours]
-        boxes = [cv2.boxPoints(rect) for rect in contours]
 
 
         contours = [x.reshape(-1, 2) for x in contours[:2]]
@@ -134,7 +167,7 @@ class VisionPipeline:
 
         return corners_subpixel
 
-    def _estimate_pose(self, corners_subpixel: np.array) -> Tuple[np.array, np.array, float]:  # TODO: Fix
+    def _estimate_pose(self, boxes) -> Tuple[np.array, np.array, float]:  # TODO: Fix
         """
         Estimate the pose of the vision target
         :param corners_subpixel:
@@ -144,11 +177,13 @@ class VisionPipeline:
         print("Running solvePnPRansac")
 
         # NOTE: If using solvePnPRansac, retvals are retval, rvec, tvec, inliers
+        #boxes = cv2.UMat(boxes)
 
         retval, rvec, tvec = cv2.solvePnP(constants.VISION_TAPE_OBJECT_POINTS,
-                                          corners_subpixel,
+                                          boxes,
                                           self.calibration_info.camera_matrix,
                                           self.calibration_info.dist_coeffs)
+        print(retval)
 
         dist = np.linalg.norm(tvec)
         return rvec, tvec, dist
