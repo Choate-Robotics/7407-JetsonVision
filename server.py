@@ -10,7 +10,7 @@ from multiprocessing import Process, set_start_method
 import signal
 import traceback
 import time
-from networktables import NetworkTables
+#from networktables import NetworkTables
 
 # To see messages from networktables, you must setup logging
 import logging

@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+
 class VideoStream {
 protected:
     cv::Mat frame;
@@ -22,10 +23,15 @@ protected:
 public:
     cv::VideoCapture caps;
 
-    VideoStream(int i, int rx, int ry) {
+    VideoStream(int i, int rx, int ry, int quality) {
         this->resolution = cv::Size(rx, ry);
+#if defined(__linux__)
+        this->caps = cv::VideoCapture(i+1,cv::CAP_V4L);
+#else
         this->caps = cv::VideoCapture(i);
+#endif
         this->id = i;
+        this->quality=quality;
         if (!caps.isOpened())
             std::printf("Video capture for cam %d failed", i);
     };
@@ -124,12 +130,11 @@ class AngleDetection : public VideoStream {
 
         cv::putText(frame, text, cv::Point(resolution.width - 60, resolution.height - 10), cv::FONT_HERSHEY_SIMPLEX,
                     0.5, cv::Scalar(0, 0, 255));
-//    cv::drawContours(img,std::vector<std::vector<cv::Point> >{box},0,cv::Scalar(0,0,255),2);
 
     }
 
 public:
-    AngleDetection(int i, int rx, int ry) : VideoStream(i, rx, ry) {}
+    AngleDetection(int i, int rx, int ry,int quality) : VideoStream(i, rx, ry,quality) {}
 
     ~AngleDetection() {
         caps.release();

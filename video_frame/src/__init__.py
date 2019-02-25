@@ -1,10 +1,10 @@
-import video_frame as _video_frame
-import numpy as np
+from .video_frame import VideoStream as _VideoStream
+from .video_frame import AngleDetection as _AngleDetection
 
 
-class VideoStream(_video_frame.VideoStream):
-    def __init__(self, camera_num: int, width: int = 1080, height: int = 720):
-        super().__init__(camera_num, width, height)
+class VideoStream(_VideoStream):
+    def __init__(self, camera_num: int, width: int = 1080, height: int = 720, quality:int=80):
+        super().__init__(camera_num, width, height,quality)
 
     def getCompressedFrame(self) -> memoryview:
         """
@@ -40,9 +40,9 @@ class VideoStream(_video_frame.VideoStream):
         super().setQuality(quality)
 
 
-class AngleDetection(_video_frame.AngleDetection):
-    def __init__(self, camera_num: int, width: int = 1080, height: int = 720):
-        super().__init__(camera_num, width, height)
+class AngleDetection(_AngleDetection):
+    def __init__(self, camera_num: int, width: int = 1080, height: int = 720,quality:int=80):
+        super().__init__(camera_num, width, height,quality)
 
     def getCompressedFrame(self) -> memoryview:
         """

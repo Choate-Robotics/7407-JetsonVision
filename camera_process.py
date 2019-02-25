@@ -1,7 +1,5 @@
 import numpy as np
-import cv2
 from time import time
-from processors import VideoStreamingFrame,AngleDetectionFrame
 import threading, socket
 import struct
 import os, sys
@@ -10,6 +8,7 @@ import json
 import signal
 import traceback
 import cProfile
+from video_frame import VideoStream,AngleDetection
 
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
@@ -26,9 +25,6 @@ class CameraModule:
             self.caps = cv2.VideoCapture(camNum+1,cv2.CAP_V4L)
         else:
             self.caps = cv2.VideoCapture(camNum)
-        #cv2.CAP_DS
-        #self.caps.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
-        #self.caps.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.large_cam = 0
         self.frame = []
         self.encframe = None
@@ -43,9 +39,9 @@ class CameraModule:
             while True:
                 self.timestamp = time()
                 if self.camNum == 0:
-                    self.frame=AngleDetectionFrame(self.caps.read()[1]).resize(self.screen_size)
+                    self.frame=AngleDetection(0)
                 else:
-                    self.frame = VideoStreamingFrame(self.caps.read()[1]).GaussianBlur(3).resize(self.screen_size)
+                    self.frame =VideoStream(self.camNum)
                 self.encframe = self.frame.conv_jpeg(self.img_quality)
                 self.camReady = True
         finally:

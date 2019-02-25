@@ -6,7 +6,7 @@
 
 
 int main() {
-    auto v=AngleDetection(0,720,480);
+    auto v=AngleDetection(0,720,480,80);
     auto last= std::chrono::high_resolution_clock::now();
     for (;;) {
 
