@@ -22,7 +22,7 @@ def chunk(frame):
 
 class CameraModule:
     def __init__(self, camNum):
-        self.caps = cv2.VideoCapture(camNum)
+        self.caps = cv2.VideoCapture(camNum+1, cv2.CAP_V4L)
         #cv2.CAP_DS
         #self.caps.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
         #self.caps.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)

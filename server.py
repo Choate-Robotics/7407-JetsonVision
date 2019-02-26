@@ -77,12 +77,6 @@ class ReadingThread(threading.Thread):
                 print('Connection address:', self.addr)
                 clientaddr = self.addr
 
-                t0 = time.time()
-                self.conn.send(struct.pack('i',1))
-                t1,t2 = struct.unpack('dd',self.conn.recv(16))
-                t3 = time.time()
-                offset = ((t1-t0)+(t2-t3))/2
-                print(offset)
 
 
                 while True:
