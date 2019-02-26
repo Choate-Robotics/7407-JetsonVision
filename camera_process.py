@@ -1,5 +1,5 @@
 import numpy as np
-from time import time
+from time import time,sleep
 import threading, socket
 import struct
 import os, sys
@@ -12,40 +12,44 @@ from video_frame import VideoStream,AngleDetection
 
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def chunk(frame):
     chunks = []
-    for i in range(ceil(len(frame) / 1020)):
+    for i in range(int(ceil(len(frame)) / 1020)):
         chunks.append(i.to_bytes(4, "big") + frame[1020 * i:1020 * (i + 1)])
     return chunks
+#
+# class CameraModule:
+#     def __init__(self, camNum):
+#         if os.uname().nodename == 'tegra-ubuntu':
+#             self.caps = cv2.VideoCapture(camNum+1,cv2.CAP_V4L)
+#         else:
+#             self.caps = cv2.VideoCapture(camNum)
+#         self.large_cam = 0
+#         self.frame = []
+#         self.encframe = None
+#         self.timestamp = None
+#         self.img_quality = 25
+#         self.screen_size = 240
+#         self.camReady = False
+#         self.camNum = camNum
+#
+#     def start_capture(self):
+#         try:
+#             while True:
+#                 self.timestamp = time()
+#                 if self.camNum == 0:
+#                     self.frame=AngleDetection(0)
+#                 else:
+#                     self.frame =VideoStream(self.camNum)
+#                 self.encframe = self.frame.conv_jpeg(self.img_quality)
+#                 self.camReady = True
+#         finally:
+#             self.caps.release()
 
-class CameraModule:
-    def __init__(self, camNum):
-        if os.uname().nodename == 'tegra-ubuntu':
-            self.caps = cv2.VideoCapture(camNum+1,cv2.CAP_V4L)
-        else:
-            self.caps = cv2.VideoCapture(camNum)
-        self.large_cam = 0
-        self.frame = []
-        self.encframe = None
-        self.timestamp = None
-        self.img_quality = 25
-        self.screen_size = 240
-        self.camReady = False
-        self.camNum = camNum
 
-    def start_capture(self):
-        try:
-            while True:
-                self.timestamp = time()
-                if self.camNum == 0:
-                    self.frame=AngleDetection(0)
-                else:
-                    self.frame =VideoStream(self.camNum)
-                self.encframe = self.frame.conv_jpeg(self.img_quality)
-                self.camReady = True
-        finally:
-            self.caps.release()
+
 
 
 class SendingThread(threading.Thread):
@@ -63,7 +67,7 @@ class SendingThread(threading.Thread):
             HOST, PORT = "0.0.0.0", (5800 + self.camera_number + 2)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind((HOST, PORT))
-        print("Write socket binded to port", PORT)
+        print("Write socket bound to port", PORT)
         frameIndex = 0
 
         while True:
@@ -88,12 +92,13 @@ class SendingThread(threading.Thread):
 class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.camNum = int(sys.argv[1])
-        self.pastData = None
+        self.pastData=None
 
     def run(self):
+        global img_quality,resolution,ip
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.bind("./socket" + str(self.camNum) + ".sock")
+        s.bind("./socket" + str(camera_number) + ".sock")
+        print("Unix socket bind to ./socket" + str(camera_number) + ".sock", )
 
         while True:
             s.listen(2)
@@ -109,14 +114,14 @@ class ReadingThread(threading.Thread):
                     data = self.conn.recv(BUFFER_SIZE)
                     if data == self.pastData: continue
                     if not data: break
-                    print("Camera",self.camNum,"received data:", data)
+                    print("Camera",camera_number,"received data:", data)
                     try:
                         dec = data.decode().split('|')
                         print(dec)
                         settings = json.loads(dec[-2])
-                        cam.cameraModule.img_quality = settings['cam' + str(self.camNum)]['quality']
-                        cam.cameraModule.screen_size = settings['cam' + str(self.camNum)]['resolution']
-                        cam.sendingThread.ip = settings['ip']
+                        img_quality = settings['cam' + str(camera_number)]['quality']
+                        resolution = settings['cam' + str(camera_number)]['resolution']
+                        ip = settings['ip']
                         self.pastData = data
                         print('Settings Updated')
                     except:
@@ -134,32 +139,66 @@ class ReadingThread(threading.Thread):
 
 def handler(signum, frame):
     try:
-        cam.readConfig.conn.close()
+        reading_thread.conn.close()
         print('Camera Handler TCP Connection Closed')
     except:
         print(traceback.format_exc(), file=sys.stderr, flush=True)
 
 
-class cameraWrapper:
+# class cameraWrapper:
+#
+#     def __init__(self):
+#
+#         self.camNum = int(sys.argv[1])
+#         print('Camera', self.camNum, 'started')
+#         self.cameraModule = CameraModule(self.camNum)
+#         self.sendingThread = SendingThread(self.camNum, self.cameraModule, 0)
+#         self.readConfig = ReadingThread()
 
-    def __init__(self):
-
-        self.camNum = int(sys.argv[1])
-        print('Camera', self.camNum, 'started')
-        self.cameraModule = CameraModule(self.camNum)
-        self.sendingThread = SendingThread(self.camNum, self.cameraModule, 0)
-        self.readConfig = ReadingThread()
-
-cam = cameraWrapper()
-cam.readConfig.start()
-cam.sendingThread.start()
+# cam = cameraWrapper()
+# cam.readConfig.start()
+# cam.sendingThread.start()
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGQUIT, handler)
 
-cam.cameraModule.start_capture()
+camera_number=int(sys.argv[1])
+camera=VideoStream(camera_number)
 
+
+
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.bind(("0.0.0.0", 5801 + camera_number))
+print("Write socket bound to port", 5801 + camera_number)
+frameIndex = 0
+ip='127.0.0.1'
+img_quality=80
+resolution=240
+
+reading_thread=ReadingThread()
+reading_thread.start()
+
+while True:
+    time_started=time()
+    frame=camera.getCompressedFrame()
+    f=open('img/%d.jpg'%frameIndex,'wb+')
+    f.write(frame.tobytes())
+    f.close()
+    print('%d bytes written to img/%d.jpg  %s'%(len(frame),frameIndex,frame.tobytes().hex()))
+    print('frame captured')
+    chunks=chunk(frame)
+    
+    times = struct.pack('>IIdd', int(ceil(len(frame)) / 1020), frameIndex,
+                        time_started,
+                        time() - time_started)
+    s.sendto(HANDSHAKE_SIGNATURE + times,
+             (ip, (5801 + camera_number)))  # Send handshake
+    frameIndex += 1
+    for i in chunks:
+        s.sendto(i, (ip, (5801 + camera_number)))
+    camera.setQuality(img_quality)
+    camera.setResolution(resolution)
 
 
 

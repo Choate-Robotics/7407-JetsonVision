@@ -15,6 +15,8 @@ import time
 # To see messages from networktables, you must setup logging
 import logging
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 logging.basicConfig(level=logging.DEBUG)
 
 DEFAULT_CONFIGURATIONS = {
@@ -41,7 +43,7 @@ DEFAULT_CONFIGURATIONS = {
 HANDSHAKE_SIGNATURE = b'\n_\x92\xc3\x9c>\xbe\xfe\xc1\x98'
 
 clientaddr = "127.0.0.1", 5801
-cam_num = 1
+number_of_cameras = 1
 
 class ReadingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
@@ -52,11 +54,11 @@ class ReadingThread(threading.Thread):
     def run(self):
         global clientaddr
         HOST, PORT = "0.0.0.0", 5800
-        print("Read socket binded to port ", PORT)
+        print("Read socket bound to port", PORT)
 
 
 
-        for i in range(cam_num):
+        for i in range(number_of_cameras):
             self.writesockets.append(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM))
             self.writesockets[i].connect("./socket" + str(i) + ".sock")
 
@@ -96,7 +98,7 @@ class ReadingThread(threading.Thread):
                         settings = json.loads(dec[-2])
                         settings['ip'] = self.addr[0]
                         data = json.dumps(settings).encode()
-                        for i in range(cam_num):
+                        for i in range(number_of_cameras):
                             self.writesockets[i].send(data+b'|')
                         self.pastData = data
                     except:
@@ -137,10 +139,10 @@ def startupcam(i):
 class MainUDP:
 
     def __init__(self):
-        self.cam_num = cam_num
+        self.number_of_cameras = number_of_cameras
         self.readThread = ReadingThread()
         self.processes = []
-        for i in range(self.cam_num):
+        for i in range(self.number_of_cameras):
 
             if os.path.exists("./socket%d.sock"%i):
                 os.remove("./socket%d.sock"%i)
@@ -150,7 +152,8 @@ class MainUDP:
             self.processes.append(p)
 
         #flag = False
-        while not all(os.path.exists("./socket%d.sock"%i) for i in range(self.cam_num)): pass
+        sleep(5)
+        while not all(os.path.exists("./socket%d.sock"%i) for i in range(self.number_of_cameras)): sleep(0.1)
 
         self.readThread.start()
 
