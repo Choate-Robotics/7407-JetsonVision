@@ -113,3 +113,4 @@ Makefile
 Vision
 Vision.cbp
 cmake_install.cmake
+img/
