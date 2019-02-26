@@ -9,6 +9,7 @@ class VideoStream {
 protected:
     cv::Mat frame;
     cv::Size resolution;
+    std::vector<unsigned char> compressedFrame;
     int quality;
     int id;
 
@@ -47,19 +48,18 @@ public:
     }
 
     std::vector<unsigned char> getCompressedFrame() {
-        std::vector<uchar> buf;
         captureFrame();
         processFrame();
-        cv::imencode(".jpg", frame, buf, std::vector<int>{
+        cv::imencode(".jpg", frame, this->compressedFrame, std::vector<int>{
                 cv::IMWRITE_JPEG_QUALITY, quality,
                 cv::IMWRITE_JPEG_OPTIMIZE, 1,
 
         });
-        return buf;
+        return compressedFrame;
     }
 
-    void setResolution(int width, int height) {
-        this->resolution = cv::Size(width, height);
+    void setResolution(int width) {
+        this->resolution = cv::Size(width, width/1.5);
     }
 
     int getHeight(){

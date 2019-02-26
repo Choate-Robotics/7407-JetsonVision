@@ -179,14 +179,16 @@ resolution=240
 reading_thread=ReadingThread()
 reading_thread.start()
 
+first=camera.getCompressedFrame()
+print(first.tobytes().hex())
 while True:
     time_started=time()
     frame=camera.getCompressedFrame()
-    f=open('img/%d.jpg'%frameIndex,'wb+')
-    f.write(frame.tobytes())
-    f.close()
-    print('%d bytes written to img/%d.jpg  %s'%(len(frame),frameIndex,frame.tobytes().hex()))
-    print('frame captured')
+    # f=open('img/%d.jpg'%frameIndex,'wb+')
+    # f.write(frame.tobytes())
+    # f.close()
+    # print('%d bytes written to img/%d.jpg  %s'%(len(frame),frameIndex,frame.tobytes().hex()))
+    # print('frame captured')
     chunks=chunk(frame)
     
     times = struct.pack('>IIdd', int(ceil(len(frame)) / 1020), frameIndex,
@@ -200,6 +202,9 @@ while True:
     camera.setQuality(img_quality)
     camera.setResolution(resolution)
 
+    if frameIndex>100:
+        print(first.tobytes().hex())
+        break
 
 
 

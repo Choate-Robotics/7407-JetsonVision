@@ -13,6 +13,7 @@ Vision
 Video
 video_frame
 video_frame.*
+!video_frame.cpp
 *.cbp
 .idea/
 cmake-build-debug/
