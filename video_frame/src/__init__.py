@@ -33,8 +33,8 @@ class VideoStream(_VideoStream):
     def id(self) -> int:
         return super().getId()
 
-    def setResolution(self, width: int, height: int) -> None:
-        super().setResolution(width, height)
+    def setResolution(self, width: int) -> None:
+        super().setResolution(width)
 
     def setQuality(self, quality: int):
         super().setQuality(quality)
@@ -71,8 +71,8 @@ class AngleDetection(_AngleDetection):
     def angle(self) -> float:
         return super().getAngle()
 
-    def setResolution(self, width: int, height: int) -> None:
-        super().setResolution(width, height)
+    def setResolution(self, width: int) -> None:
+        super().setResolution(width)
 
     def setQuality(self, quality: int):
         super().setQuality(quality)

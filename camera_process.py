@@ -182,11 +182,11 @@ reading_thread.start()
 while True:
     time_started=time()
     frame=camera.getCompressedFrame()
-    f=open('img/%d.jpg'%frameIndex,'wb+')
-    f.write(frame.tobytes())
-    f.close()
-    print('%d bytes written to img/%d.jpg  %s'%(len(frame),frameIndex,frame.tobytes().hex()))
-    print('frame captured')
+#    f=open('img/%d.jpg'%frameIndex,'wb+')
+#    f.write(frame.tobytes())
+#    f.close()
+#    print('%d bytes written to img/%d.jpg  %s'%(len(frame),frameIndex,frame.tobytes().hex()))
+#    print('frame captured')
     chunks=chunk(frame)
     
     times = struct.pack('>IIdd', int(ceil(len(frame)) / 1020), frameIndex,

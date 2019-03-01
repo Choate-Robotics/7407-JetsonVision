@@ -58,8 +58,8 @@ public:
         return buf;
     }
 
-    void setResolution(int width, int height) {
-        this->resolution = cv::Size(width, height);
+    void setResolution(int width) {
+        this->resolution = cv::Size(width,width/1.5);
     }
 
     int getHeight(){
