@@ -3,7 +3,7 @@ from PIL import Image
 import numpy as np
 import time,io
 
-v=AngleDetection(0)
+v=VideoStream(0)
 print(v)
 
 for i in range(1000):

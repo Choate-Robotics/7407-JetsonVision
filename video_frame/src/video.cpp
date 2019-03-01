@@ -11,13 +11,12 @@ int main() {
     for (;;) {
 
         auto img=v.getFrame();
-        auto buf=v.getCompressedFrame();
-        //img = processImage(img);
-        auto now = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - last);
+        //auto buf=v.getCompressedFrame();
+       auto now = std::chrono::high_resolution_clock::now();
+       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - last);
         std::printf("\rTime: %f ms", duration.count() / 1000.0);
-        last=now;
-        cv::imshow("", img);
-        cv::waitKey(1);
+      last=now;
+      cv::imshow("", img);
+      cv::waitKey(1);
     }
 }

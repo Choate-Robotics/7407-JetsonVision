@@ -60,6 +60,7 @@ public:
 
     void setResolution(int width) {
         this->resolution = cv::Size(width, width/1.5);
+
     }
 
     int getHeight(){
