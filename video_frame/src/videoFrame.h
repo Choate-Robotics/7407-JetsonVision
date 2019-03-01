@@ -145,5 +145,16 @@ public:
     }
 };
 
+class CannyEdge:public VideoStream{
+    void processFrame() override{
+        cv::Mat m;
+        cv::GaussianBlur(frame,frame,cv::Size(5,5),0);
+        cv::Canny(frame,m,0,100);
+        this->frame=m;
+    }
+public:
+    CannyEdge(int i,int rx, int ry,int quality):VideoStream(i,rx,ry,quality){}
+    ~CannyEdge(){caps.release();}
+};
 
 #endif //VIDEOFRAME_VIDEOFRAME_H
