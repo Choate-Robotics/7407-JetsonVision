@@ -11,7 +11,7 @@ class VideoStream(_VideoStream):
         :return: The processed, JPEG encoded frame with resolution of
                 (self.width, self.height) and quality of self.quality
         """
-        return super().getCompressedFrame()
+        return memoryview(super().getCompressedFrame())
 
     @property
     def width(self) -> int:

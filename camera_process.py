@@ -179,8 +179,6 @@ resolution=240
 reading_thread=ReadingThread()
 reading_thread.start()
 
-first=camera.getCompressedFrame()
-print(first.tobytes().hex())
 while True:
     time_started=time()
     frame=camera.getCompressedFrame()
@@ -203,9 +201,6 @@ while True:
     camera.setQuality(img_quality)
     camera.setResolution(resolution)
 
-    if frameIndex>100:
-        print(first.tobytes().hex())
-        break
 
 
 

@@ -12,7 +12,7 @@ struct vector_to_bytes{
 
 
 //        std::printf("Converter Called\n");
-        const unsigned char * p=&vec[0];
+        //const unsigned char * p=&vec[0];
 /*
         char filename[16];
         std::sprintf(filename,"img/C%d.jpg",i++);
@@ -26,7 +26,7 @@ struct vector_to_bytes{
         std::printf("\n");
 */
 
-        return PyMemoryView_FromMemory((char *)p,vec.size(),PyBUF_READ);
+        return PyBytes_FromStringAndSize((char *)&vec[0],vec.size());
     }
 };
 
