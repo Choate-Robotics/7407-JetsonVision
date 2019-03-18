@@ -9,23 +9,6 @@
 int i=0;
 struct vector_to_bytes{
     static PyObject* convert(std::vector<unsigned char> const &vec){
-
-
-//        std::printf("Converter Called\n");
-        //const unsigned char * p=&vec[0];
-/*
-        char filename[16];
-        std::sprintf(filename,"img/C%d.jpg",i++);
-        std::ofstream out(filename);
-        out.write(reinterpret_cast<const char *>(p),vec.size());
-        out.close();
-        std::printf("%d bytes written to %s ",(int)vec.size(),&filename[0]);
-        for (char c:vec){
-            std::printf("%x",c);
-        }
-        std::printf("\n");
-*/
-
         return PyBytes_FromStringAndSize((char *)&vec[0],vec.size());
     }
 };

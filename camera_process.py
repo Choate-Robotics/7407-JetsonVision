@@ -19,34 +19,6 @@ def chunk(frame):
     for i in range(int(ceil(len(frame)) / 1020)):
         chunks.append(i.to_bytes(4, "big") + frame[1020 * i:1020 * (i + 1)])
     return chunks
-#
-# class CameraModule:
-#     def __init__(self, camNum):
-#         if os.uname().nodename == 'tegra-ubuntu':
-#             self.caps = cv2.VideoCapture(camNum+1,cv2.CAP_V4L)
-#         else:
-#             self.caps = cv2.VideoCapture(camNum)
-#         self.large_cam = 0
-#         self.frame = []
-#         self.encframe = None
-#         self.timestamp = None
-#         self.img_quality = 25
-#         self.screen_size = 240
-#         self.camReady = False
-#         self.camNum = camNum
-#
-#     def start_capture(self):
-#         try:
-#             while True:
-#                 self.timestamp = time()
-#                 if self.camNum == 0:
-#                     self.frame=AngleDetection(0)
-#                 else:
-#                     self.frame =VideoStream(self.camNum)
-#                 self.encframe = self.frame.conv_jpeg(self.img_quality)
-#                 self.camReady = True
-#         finally:
-#             self.caps.release()
 
 
 
@@ -145,19 +117,6 @@ def handler(signum, frame):
         print(traceback.format_exc(), file=sys.stderr, flush=True)
 
 
-# class cameraWrapper:
-#
-#     def __init__(self):
-#
-#         self.camNum = int(sys.argv[1])
-#         print('Camera', self.camNum, 'started')
-#         self.cameraModule = CameraModule(self.camNum)
-#         self.sendingThread = SendingThread(self.camNum, self.cameraModule, 0)
-#         self.readConfig = ReadingThread()
-
-# cam = cameraWrapper()
-# cam.readConfig.start()
-# cam.sendingThread.start()
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)

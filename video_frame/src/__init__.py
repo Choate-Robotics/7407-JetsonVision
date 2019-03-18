@@ -3,8 +3,8 @@ from .video_frame import AngleDetection as _AngleDetection
 
 
 class VideoStream(_VideoStream):
-    def __init__(self, camera_num: int, width: int = 1080, height: int = 720, quality:int=80):
-        super().__init__(camera_num, width, height,quality)
+    def __init__(self, camera_num: int, width: int = 1080, height: int = 720, quality: int = 80):
+        super().__init__(camera_num, width, height, quality)
 
     def getCompressedFrame(self) -> memoryview:
         """
@@ -26,7 +26,7 @@ class VideoStream(_VideoStream):
         return super().getQuality()
 
     @quality.setter
-    def quality(self,quality:int):
+    def quality(self, quality: int):
         super().setQuaity(quality)
 
     @property
@@ -41,15 +41,15 @@ class VideoStream(_VideoStream):
 
 
 class AngleDetection(_AngleDetection):
-    def __init__(self, camera_num: int, width: int = 1080, height: int = 720,quality:int=80):
-        super().__init__(camera_num, width, height,quality)
+    def __init__(self, camera_num: int, width: int = 1080, height: int = 720, quality: int = 80):
+        super().__init__(camera_num, width, height, quality)
 
     def getCompressedFrame(self) -> memoryview:
         """
         :return: The processed, JPEG encoded frame with resolution of
                 (self.width, self.height) and quality of self.quality
         """
-        return super().getCompressedFrame()
+        return memoryview(super().getCompressedFrame())
 
     @property
     def width(self) -> int:
