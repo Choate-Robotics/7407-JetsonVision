@@ -38,6 +38,15 @@ BOOST_PYTHON_MODULE(video_frame){
             .def("getId",&AngleDetection::getId)
             ;
 
+    class_<CannyEdge>("CannyEdge",init<int,int,int,int>())
+        .def("getCompressedFrame",&CannyEdge::getCompressedFrame)
+        .def("setQuality",&CannyEdge::setQuality,args("quality"))
+        .def("setResolution",&CannyEdge::setResolution,args("width"))
+        .def("getWidth",&CannyEdge::getWidth)
+        .def("getHeight",&CannyEdge::getHeight)
+        .def("getQuality",&CannyEdge::getQuality)
+        .def("getId",&CannyEdge::getId)
+        ;
 
 }
 
