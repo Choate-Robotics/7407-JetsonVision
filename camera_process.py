@@ -16,7 +16,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def chunk(frame):
     chunks = []
-    for i in range(int(ceil(len(frame)) / 1020)):
+    for i in range(int(ceil(len(frame) / 1020))):
         chunks.append(i.to_bytes(4, "big") + frame[1020 * i:1020 * (i + 1)])
     return chunks
 
@@ -149,7 +149,7 @@ while True:
 
     chunks=chunk(frame)
     
-    times = struct.pack('>IIdd', int(ceil(len(frame)) / 1020), frameIndex,
+    times = struct.pack('>IIdd', int(ceil(len(frame) / 1020)), frameIndex,
                         time_started,
                         time() - time_started)
     s.sendto(HANDSHAKE_SIGNATURE + times,
